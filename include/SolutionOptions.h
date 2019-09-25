@@ -126,6 +126,7 @@ public:
   bool consistentMMPngDefault_;
   bool useConsolidatedSolverAlg_;
   bool useConsolidatedBcSolverAlg_;
+  bool useTidySolverAlg_;
   bool eigenvaluePerturb_;
   double eigenvaluePerturbDelta_;
   int eigenvaluePerturbBiasTowards_;

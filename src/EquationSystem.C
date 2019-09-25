@@ -103,6 +103,9 @@ EquationSystem::~EquationSystem()
   }
 }
 
+Simulation *EquationSystem::root() { return parent()->root(); }
+EquationSystems *EquationSystem::parent() { return &equationSystems_; }
+
 //--------------------------------------------------------------------------
 //-------- set_nodal_gradient ----------------------------------------------
 //--------------------------------------------------------------------------

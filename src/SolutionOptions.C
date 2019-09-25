@@ -70,6 +70,7 @@ SolutionOptions::SolutionOptions()
     consistentMMPngDefault_(false),
     useConsolidatedSolverAlg_(false),
     useConsolidatedBcSolverAlg_(false),
+    useTidySolverAlg_(false),
     eigenvaluePerturb_(false),
     eigenvaluePerturbDelta_(0.0),
     eigenvaluePerturbBiasTowards_(3),
@@ -131,6 +132,9 @@ SolutionOptions::load(const YAML::Node & y_node)
 
     // check for consolidated face-elem bc alg
     get_if_present(y_solution_options, "use_consolidated_face_elem_bc_algorithm", useConsolidatedBcSolverAlg_, useConsolidatedBcSolverAlg_);
+    
+    // check for tidy solver alg (AssembleSolver)
+    get_if_present(y_solution_options, "use_tidy_solver_algorithm", useTidySolverAlg_, useTidySolverAlg_);
 
     // eigenvalue purturbation; over all dofs...
     get_if_present(y_solution_options, "eigenvalue_perturbation", eigenvaluePerturb_);
@@ -188,7 +192,7 @@ SolutionOptions::load(const YAML::Node & y_node)
       inputVariablesPeriodicTime_, inputVariablesPeriodicTime_);
 
     // first set of options; hybrid, source, etc.
-    const YAML::Node y_options = expect_sequence(y_solution_options, "options", required);
+    const YAML::Node y_options = expect_sequence(y_solution_options, "options", optional);
     if (y_options)
     {
       for (size_t ioption = 0; ioption < y_options.size(); ++ioption)

@@ -45,7 +45,8 @@ TimeIntegrator::TimeIntegrator(Simulation* sim)
     secondOrderTimeAccurate_(false),
     adaptiveTimeStep_(false),
     terminateBasedOnTime_(false),
-    nonlinearIterations_(1)
+    nonlinearIterations_(1),
+    steady_(false)
 {
   // does nothing  
 }
@@ -69,6 +70,7 @@ void TimeIntegrator::load(const YAML::Node & node)
       //const YAML::Node *otherTimeIntegrator_node = time_int_node.FindValue("OtherTimeIntegrator");
       if (standardTimeIntegrator_node) {
         name_ = standardTimeIntegrator_node["name"].as<std::string>() ;
+        get_if_present(standardTimeIntegrator_node, "steady", steady_, steady_);
 	      
         // is termination based on cumulative time or cumulative step count
         if ( standardTimeIntegrator_node["termination_time"] ) {
@@ -100,12 +102,13 @@ void TimeIntegrator::load(const YAML::Node & node)
         adaptiveTimeStep_ = ( timeStepType == "fixed" ) ? false : true;
 
         NaluEnv::self().naluOutputP0() << "StandardTimeIntegrator " << std::endl
-                                       << " name=              " << name_  << std::endl
-                                       << " second order =     " << secondOrderTimeAccurate_ << std::endl;
+                                       << " name =              " << name_  << std::endl
+                                       << " steady =            " << (steady_ ? "true, other properties are irrelevant" : "false") << std::endl
+                                       << " second order =      " << secondOrderTimeAccurate_ << std::endl;
         if ( terminateBasedOnTime_ )
           NaluEnv::self().naluOutputP0() << " totalSimTime =     " << totalSimTime_ << std::endl;
         else
-          NaluEnv::self().naluOutputP0() << " maxTimeStepCount = " << maxTimeStepCount_ << std::endl;
+          NaluEnv::self().naluOutputP0() << " maxTimeStepCount =  " << maxTimeStepCount_ << std::endl;
         
         if ( adaptiveTimeStep_ )  
           NaluEnv::self().naluOutputP0() << " adaptive time step is active (realm owns specifics) " << std::endl;
@@ -365,13 +368,19 @@ bool
 TimeIntegrator::simulation_proceeds()
 {
   bool proceed = false;
-  if ( terminateBasedOnTime_ ) {
-    if (currentTime_ < totalSimTime_)
+  if (steady_ ) {
+    if ( timeStepCount_ < 1 )
       proceed = true;
   }
   else {
-    if ( timeStepCount_ < maxTimeStepCount_ )
-      proceed = true;
+    if ( terminateBasedOnTime_ ) {
+      if (currentTime_ < totalSimTime_)
+        proceed = true;
+    }
+    else {
+      if ( timeStepCount_ < maxTimeStepCount_ )
+        proceed = true;
+    }
   }
   return proceed;
 }

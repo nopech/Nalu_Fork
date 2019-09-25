@@ -1,6 +1,7 @@
 ############################ BASE ######################################
 cmake_minimum_required (VERSION 3.1)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
 
 ########################## OPTIONS #####################################
 option(ENABLE_TESTS "Enable regression testing." OFF)

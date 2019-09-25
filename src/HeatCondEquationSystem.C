@@ -13,6 +13,7 @@
 #include "AssembleHeatCondIrradWallSolverAlgorithm.h"
 #include "AssembleScalarEdgeDiffSolverAlgorithm.h"
 #include "AssembleScalarElemDiffSolverAlgorithm.h"
+#include "AssembleScalarElemDiffSolverAlgorithmTidy.h"
 #include "AssembleScalarDiffNonConformalSolverAlgorithm.h"
 #include "AssembleScalarFluxBCSolverAlgorithm.h"
 #include "AssembleNodalGradAlgorithmDriver.h"
@@ -324,8 +325,14 @@ HeatCondEquationSystem::register_interior_algorithm(
                                                                  &tempNp1, &dtdxNone, thermalCond_);
       }
       else {
-        theSolverAlg = new AssembleScalarElemDiffSolverAlgorithm(realm_, part, this,
-                                                                 &tempNp1, &dtdxNone, thermalCond_);
+        if ( realm_.solutionOptions_->useTidySolverAlg_ ) {
+          theSolverAlg = new AssembleScalarElemDiffSolverAlgorithmTidy(realm_, part, this,
+                                                                       &tempNp1, &dtdxNone, thermalCond_);
+        }
+        else {
+          theSolverAlg = new AssembleScalarElemDiffSolverAlgorithm(realm_, part, this,
+                                                                   &tempNp1, &dtdxNone, thermalCond_);
+        }
       }
       solverAlgDriver_->solverAlgMap_[algType] = theSolverAlg;
       
@@ -425,15 +432,18 @@ HeatCondEquationSystem::register_interior_algorithm(
       solverAlgDriver_->solverAlgMap_[algMass] = theAlg;
       
       // now create the supplemental alg for mass term
-      if ( realm_.number_of_states() == 2 ) {
-        HeatCondMassBackwardEulerNodeSuppAlg *theMass
-          = new HeatCondMassBackwardEulerNodeSuppAlg(realm_);
-        theAlg->supplementalAlg_.push_back(theMass);
-      }
-      else {
-        HeatCondMassBDF2NodeSuppAlg *theMass
-          = new HeatCondMassBDF2NodeSuppAlg(realm_);
-        theAlg->supplementalAlg_.push_back(theMass);
+      // only if not simulation is not steady
+      if ( !root()->timeIntegrator_->steady_ ) {
+        if ( realm_.number_of_states() == 2 ) {
+          HeatCondMassBackwardEulerNodeSuppAlg *theMass
+            = new HeatCondMassBackwardEulerNodeSuppAlg(realm_);
+          theAlg->supplementalAlg_.push_back(theMass);
+        }
+        else {
+          HeatCondMassBDF2NodeSuppAlg *theMass
+            = new HeatCondMassBDF2NodeSuppAlg(realm_);
+          theAlg->supplementalAlg_.push_back(theMass);
+        }
       }
       
       // Add src term supp alg...; limited number supported
